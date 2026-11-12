@@ -22,4 +22,6 @@ Open http://127.0.0.1:8000/ in your browser. Keep PowerShell open while using th
 
 ## Edit the syllabus
 
+The expansion cards are in `extra-cards.js`, `extra-evs.js`, and `extra-generated.js`. The site appends them to the original deck rows in `syllabus.js`. An optional eighth field holds a replacement card row for Practice, Mixed Quiz, and Try Again. This lets an oral Learn activity have a scored question about a fictional character.
+
 In `syllabus.js`, each subject contains topics and each topic contains decks. A card row contains the answer, illustration, prompt, optional explanation, optional spoken example, optional choices and optional ordered tiles. Use `null` for an unused field before a field you need. Reuse the existing examples for counted dots, shapes, matching and ordering. Keep existing deck titles and card positions stable when preserving saved progress matters. Append new cards to existing decks where practical.

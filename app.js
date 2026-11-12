@@ -1,4 +1,4 @@
-import {subjects} from './syllabus.js';
+import {subjects} from './syllabus.js?v=2';
 import {drawShape} from './shapes.js';
 
 const app = document.querySelector('#app');
@@ -11,8 +11,8 @@ for (const subject of subjects) {
     const topic = {id,name,icon,decks:[]};
     topic.decks = rows.map(([title,picture,items]) => {
       const deck = {id:id+'/'+slug(title),title,picture,subject,topic,cards:[]};
-      deck.cards = items.map(([answer,art,prompt,detail,example,choices,order],i) => {
-        const card = {id:deck.id+'/'+(i+1),answer,art,prompt,detail,example,choices,order,deck};
+      deck.cards = items.map(([answer,art,prompt,detail,example,choices,order,practice],i) => {
+        const card = {id:deck.id+'/'+(i+1),answer,art,prompt,detail,example,choices,order,practice,deck};
         cards.set(card.id,card);
         return card;
       });
@@ -52,23 +52,30 @@ let session;
 let audioNotice = '';
 function resetCard() {
   const card = session.items[session.index];
-  const isMatching = session.mode==='practice' && ['Fruits','Vegetables','Domestic animals','Wild animals','Water animals','Birds'].includes(card.deck.title);
+  const isMatching = session.mode==='practice' && !card.choices && ['Fruits','Vegetables','Domestic animals','Wild animals','Water animals','Birds'].includes(card.deck.title);
   session.state = {revealed:false,correct:false,feedback:'',order:[],selected:null,matched:new Set(),hadError:false};
   if(isMatching){
-    const group=[card,...shuffle(card.deck.cards.filter(item=>item!==card)).slice(0,2)];
+    const group=[card,...shuffle(card.deck.cards.filter(item=>item!==card && !item.choices)).slice(0,2)];
     session.state.match = {pictures:shuffle(group),names:shuffle(group)};
   } else if(session.mode!=='learn' && !card.order) {
     const alternatives = card.choices || (card.art.length===1 && /^[a-z]$/i.test(card.art) && /^[a-z]$/i.test(card.answer)
       ? [...(card.answer===card.answer.toUpperCase()?'ABCDEFGHIJKLMNOPQRSTUVWXYZ':'abcdefghijklmnopqrstuvwxyz')]
-      : card.deck.cards.map(item=>item.answer));
+      : card.deck.cards.filter(item=>!card.deck.title.endsWith('transport') || !item.choices).map(item=>item.answer));
     session.state.options = shuffle([...new Set([card.answer,...shuffle(alternatives.filter(value=>value!==card.answer)).slice(0,3)])]).map(value=>{
       const item=card.deck.cards.find(item=>item.answer===value);
-      return {value,picture:card.deck.title.endsWith('transport')?item?.art:null};
+      return {value,picture:!card.choices && card.deck.title.endsWith('transport')?item?.art:null};
     });
   }
   audioNotice='';
 }
 function start(mode,items,title,back,subject,deck) {
+  if(mode!=='learn'){
+    items=items.map(card=>{
+      if(!card.practice) return card;
+      const [answer,art,prompt,detail,example,choices,order]=card.practice;
+      return {...card,answer,art,prompt,detail,example,choices,order};
+    });
+  }
   session={mode,items,title,back,subject,deck,index:0,score:0,done:false,seen:new Set()};
   if(items.length) resetCard();
   renderSession();
@@ -130,7 +137,7 @@ function renderSession(focusAction) {
   const final=index===items.length-1;
   const tabs=deck?`<nav class="tabs" aria-label="Deck mode">${['Learn','Practice'].map(name=>`<a href="#${deck.id}/${name.toLowerCase()}" ${name.toLowerCase()===mode?'aria-current="page"':''}>${name}</a>`).join('')}</nav>`:'';
   let activity='';
-  const pictureChoice=!learn && card.deck.title.endsWith('transport');
+  const pictureChoice=!learn && !card.choices && card.deck.title.endsWith('transport');
   let prompt=pictureChoice?'Tap the picture of the '+card.answer.toLowerCase()+'.':card.prompt;
   if(state.match){
     prompt='Tap a picture, then tap its matching word.';

@@ -1,4 +1,9 @@
-// Rows: answer | illustration | prompt | explanation | optional spoken example
+import {extraCards} from './extra-cards.js';
+import {extraEvs} from './extra-evs.js';
+import {extraGenerated} from './extra-generated.js';
+
+// Rows: answer, illustration, prompt, explanation, spoken example, choices,
+// ordered tiles, and an optional row to use in scored modes.
 export const subjects = [
   {id:'math', name:'Mathematics', icon:'🔢', subtitle:'Count, compare and spot shapes', topics:[
     ['Comparing Objects','⚖️',[
@@ -136,6 +141,15 @@ export const subjects = [
     ]]
   ]}
 ];
+
+const expansion = {...extraCards,...extraEvs,...extraGenerated};
+for (const subject of subjects) {
+  for (const [, , decks] of subject.topics) {
+    for (const [title, , cards] of decks) {
+      cards.push(...expansion[title]);
+    }
+  }
+}
 
 function identify(entries, kind) {
   return entries.split(';').map(entry => {
